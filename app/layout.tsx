@@ -10,8 +10,9 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Converso",
+  title: "NeoTutor",
   description: "Real-time AI Teaching Platform",
+  
 };
 
 export default function RootLayout({
@@ -21,13 +22,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/icons/favicon.ico" />
+      </head>
       <body className={`${bricolage.variable} antialiased`}>
-        <ClerkProvider appearance={{variables: { colorPrimary: '#fe5933' }}}>
-          <Navbar/>
+        <ClerkProvider appearance={{ variables: { colorPrimary: '#fe5933' } }}>
+          <Navbar />
           {children}
         </ClerkProvider>
-        
-        </body>
+      </body>
     </html>
   );
 }
