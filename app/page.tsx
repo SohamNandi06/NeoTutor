@@ -5,6 +5,9 @@ import HeroSection from '@/components/HeroSection'
 import {  getPopularCompanions, getRecentSessions } from '@/lib/actions/companion.actions'
 import { getSubjectColor } from '@/lib/utils'
 import React from 'react'
+// app/page.tsx
+export const dynamic = "force-dynamic";
+
 
 const Page = async() => {
 const recentSessionsCompanions = await getRecentSessions(15);
