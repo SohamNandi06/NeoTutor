@@ -38,6 +38,8 @@ export const getAllCompanions = async ({
     query = query.ilike("subject", `%${subject}%`);
   } else if (topic) {
     query = query.or(`topic.ilike.%${topic}%,name.ilike.%${topic}%`);
+  }else{
+    console.log('No features found');
   }
 
   query = query.range((page - 1) * limit, page * limit - 1);
@@ -135,34 +137,35 @@ export const getUserCompanions = async (userId: string) => {
 }
 
 export const newCompanionPermissions = async () => {
-    const { userId, has } = await auth();
-    const supabase = createSupabaseClient();
+  const { userId, has } = await auth();
+  const supabase = createSupabaseClient();
 
-    let limit = 0;
+let limit = 10;
 
-    if(has({ plan: 'pro' })) {
-        return true;
-    } else if(has({ feature: "10_companion_limit" })) {
-        limit = 10;
-    } else if(has({ feature: "30_companion_limit" })) {
-        limit = 30;
-    }
-
-    const { data, error } = await supabase
-        .from('companions')
-        .select('id', { count: 'exact' })
-        .eq('author', userId)
-
-    if(error) throw new Error(error.message);
-
-    const companionCount = data?.length;
-
-    if(companionCount >= limit) {
-        return false
-    } else {
-        return true;
-    }
+if (has({ plan: 'pro_companion' })) {
+  console.log('User has Pro Plan');
+  return true;
+} else if (has({ feature: "core" })) {
+  console.log('User has 30 companion limit feature');
+  limit = 30;
+} else if (has({ feature: "basic" })) {
+  console.log('User has 10 companion limit feature');
+  limit = 10;
+} else {
+  console.warn('No plan or companion limit feature detected. Limit remains at 0');
 }
+
+
+  const {  count, error } = await supabase
+    .from('companions')
+    .select('id', { count: 'exact' })
+    .eq('author', userId);
+
+  if (error) throw new Error(error.message);
+
+  return (count ?? 0) < limit;
+};
+
 
 // Bookmarks
 export const addBookmark = async (companionId: string, path: string) => {
@@ -210,4 +213,34 @@ export const getBookmarkedCompanions = async (userId: string) => {
   }
   // We don't need the bookmarks data, so we return only the companions
   return data.map(({ companions }) => companions);
+};
+
+export const getPopularCompanions = async (limit = 10) => {
+  const supabase = createSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('session_history')
+    .select('companion_id, companions:companion_id(*)', { count: 'exact' })
+    .order('companion_id', { ascending: false }) // optional, just for stable ordering
+    .limit(1000); // large enough to aggregate from
+
+  if (error || !data) throw new Error(error.message);
+
+  // Step 1: Aggregate usage counts
+  const usageMap: Record<string, { count: number, companion: Companion }> = {};
+
+  data.forEach(({ companion_id, companions }) => {
+    if (!companion_id || !companions) return;
+    if (!usageMap[companion_id]) {
+      usageMap[companion_id] = { count: 1, companion: companions };
+    } else {
+      usageMap[companion_id].count += 1;
+    }
+  });
+    const sorted = Object.values(usageMap)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit)
+    .map((entry) => entry.companion);
+
+  return sorted;
 };
