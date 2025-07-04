@@ -14,6 +14,7 @@ interface CompanionCardProps {
   duration: number;
   color: string;
   bookmarked: boolean;
+  authorName: string; // ✅ use this instead of author ID
 }
 
 const CompanionCard = ({
@@ -24,13 +25,14 @@ const CompanionCard = ({
   duration,
   color,
   bookmarked,
+  authorName, // ✅ use this
 }: CompanionCardProps) => {
   const pathname = usePathname();
   const [isBookmarked, setIsBookmarked] = useState(bookmarked);
   const [loading, setLoading] = useState(false);
 
   const handleBookmark = async () => {
-    if (loading) return; // prevent double click
+    if (loading) return;
     setLoading(true);
 
     try {
@@ -72,6 +74,11 @@ const CompanionCard = ({
 
       <h2 className="text-2xl font-bold">{name}</h2>
       <p className="text-sm">{topic}</p>
+
+      {/* ✅ Display author's name from DB */}
+      <p className="text-sm text-gray-800 mb-2 italic">
+        By {authorName || "Unknown"}
+      </p>
 
       <div className="flex items-center gap-2">
         <Image

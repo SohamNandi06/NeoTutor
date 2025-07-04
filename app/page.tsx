@@ -22,6 +22,7 @@ const popularCompanions = await getPopularCompanions();
               <CompanionCard
                 key={companion.id}
                 {...companion}
+                
                 color={getSubjectColor(companion.subject)}
               />
             ))}
